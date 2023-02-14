@@ -5,37 +5,39 @@ import LogoutButton from "./LogoutButton";
 import { useDispatch } from "react-redux";
 import { setLoginDetails } from "../redux/actions";
 import { makeStyles } from "@mui/styles";
-import EnhancedTable from "../commonControls/SortingTable";
+import SortingTable from "../commonControls/SortingTable";
 import "../App.css";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles({
+  alignUserDetails: {
+    display: "flex",
+    flexDirection: "column",
+  },
   appTable: {
-    margin: "20px",
+    margin: "50px 100px",
     height: "73vh",
-  },
-  welcomeText: {
-    flexGrow: 2,
-    textAlign: "center",
-  },
-  logoutButton: {
-    flexGrow: 0.3,
   },
   imageP: {
     overflow: "hidden",
     height: "inherit",
-    background: "red",
     maxHeight: "fit-content",
+  },
+  loginButton: {
+    flexGrow: 0.3,
   },
   profilePic: {
     height: "inherit",
     width: "inherit",
     objectFit: "contain",
   },
-  alignUserDetails: {
-    display: "flex",
-    flexDirection: "column",
+  usersText: {
+    textAlign: "center",
   },
-}));
+  welcomeText: {
+    flexGrow: 2,
+    textAlign: "center",
+  },
+});
 
 const Home = () => {
   const classes = useStyles();
@@ -85,14 +87,15 @@ const Home = () => {
         </p>
       </div>
       <div className={classes.appTable}>
-        <EnhancedTable />
+        <h2 className={classes.usersText}>Have a look at our Users</h2>
+        <SortingTable />
       </div>
     </>
   ) : (
     <>
       <div className="App-header">
         <p className={classes.welcomeText}>Welcome to MprGlobalSolutions</p>
-        <p className={classes.logoutButton}>
+        <p className={classes.loginButton}>
           <LoginButton />
         </p>
       </div>

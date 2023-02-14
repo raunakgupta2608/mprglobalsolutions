@@ -27,7 +27,7 @@ const fetchUsersFailure = (error) => {
 
 export const fetchUsers = () => {
   return (dispatch) => {
-    dispatch(fetchUsersRequest);
+    dispatch(fetchUsersRequest());
     API.get("/users")
       .then((response) => {
         const users = response.data;

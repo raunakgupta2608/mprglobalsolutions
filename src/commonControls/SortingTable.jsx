@@ -10,10 +10,11 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import TableSortLabel from "@mui/material/TableSortLabel";
 import Paper from "@mui/material/Paper";
-import API from "../utils/axios";
 import { visuallyHidden } from "@mui/utils";
 import { makeStyles } from "@mui/styles";
-import { Avatar } from "@mui/material";
+import { Avatar, Backdrop, CircularProgress } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUsers } from "../redux/actions";
 
 const useStyle = makeStyles({
   tableHead: {
@@ -91,11 +92,6 @@ function stableSort(array, comparator) {
 
 const headCells = [
   {
-    id: "id",
-    numeric: false,
-    label: "id",
-  },
-  {
     id: "avatar",
     numeric: true,
     label: "Avatar",
@@ -106,7 +102,7 @@ const headCells = [
     label: "Name",
   },
   {
-    id: "Email",
+    id: "email",
     numeric: true,
     label: "Email",
   },
@@ -117,7 +113,7 @@ const headCells = [
   },
 ];
 
-function EnhancedTableHead(props) {
+function SortingTableHead(props) {
   const { order, orderBy, onRequestSort } = props;
   const classes = useStyle();
   const createSortHandler = (property) => (event) => {
@@ -125,26 +121,30 @@ function EnhancedTableHead(props) {
   };
 
   return (
-    <TableHead classes={{ root: classes.tableHead }}>
-      <TableRow classes={{ root: classes.tableRow }}>
+    <TableHead className={classes.tableHead}>
+      <TableRow className={classes.tableRow}>
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
             sortDirection={orderBy === headCell.id ? order : false}
             align="center"
           >
-            <TableSortLabel
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : "asc"}
-              onClick={createSortHandler(headCell.id)}
-            >
-              {headCell.label}
-              {orderBy === headCell.id ? (
-                <Box component="span" sx={visuallyHidden}>
-                  {order === "desc" ? "sorted descending" : "sorted ascending"}
-                </Box>
-              ) : null}
-            </TableSortLabel>
+            {headCell.label}
+            {["name"].includes(headCell.id) && (
+              <TableSortLabel
+                active={orderBy === headCell.id}
+                direction={orderBy === headCell.id ? order : "asc"}
+                onClick={createSortHandler(headCell.id)}
+              >
+                {orderBy === headCell.id ? (
+                  <Box component="span" sx={visuallyHidden}>
+                    {order === "desc"
+                      ? "sorted descending"
+                      : "sorted ascending"}
+                  </Box>
+                ) : null}
+              </TableSortLabel>
+            )}
           </TableCell>
         ))}
       </TableRow>
@@ -152,23 +152,21 @@ function EnhancedTableHead(props) {
   );
 }
 
-EnhancedTableHead.propTypes = {
-  numSelected: PropTypes.number.isRequired,
+SortingTableHead.propTypes = {
   onRequestSort: PropTypes.func.isRequired,
-  onSelectAllClick: PropTypes.func.isRequired,
   order: PropTypes.oneOf(["asc", "desc"]).isRequired,
   orderBy: PropTypes.string.isRequired,
-  rowCount: PropTypes.number.isRequired,
 };
 
-export default function EnhancedTable() {
+function SortingTable() {
   const [order, setOrder] = React.useState("asc");
-  const [row, setRow] = React.useState([]);
-  const [orderBy, setOrderBy] = React.useState("calories");
-  const [selected, setSelected] = React.useState([]);
+  const [orderBy, setOrderBy] = React.useState("name");
+  const [open, setOpen] = React.useState(false);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const classes = useStyle();
+  const dispatch = useDispatch();
+  const { error, loading, users } = useSelector((state) => state.user);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -176,47 +174,13 @@ export default function EnhancedTable() {
     setOrderBy(property);
   };
 
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelected = row.map((n) => n.name);
-      setSelected(newSelected);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const fetchUserData = async () => {
-    try {
-      const { data } = await API.get("/users");
-      setRow(data);
-    } catch (error) {
-      console.log("error", error);
-    }
-  };
-
   React.useEffect(() => {
-    fetchUserData();
+    dispatch(fetchUsers());
   }, []);
 
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-
-    setSelected(newSelected);
-  };
+  React.useEffect(() => {
+    setOpen(loading);
+  }, [loading]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -227,86 +191,85 @@ export default function EnhancedTable() {
     setPage(0);
   };
 
-  const isSelected = (name) => selected.indexOf(name) !== -1;
-
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - row.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - users.length) : 0;
 
   return (
-    <Box sx={{ width: "100%" }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <TableContainer>
-          <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
-            <EnhancedTableHead
-              numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
-              onSelectAllClick={handleSelectAllClick}
-              onRequestSort={handleRequestSort}
-              rowCount={row.length}
-            />
-            <TableBody>
-              {stableSort(row, getComparator(order, orderBy))
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row, index) => {
-                  const isItemSelected = isSelected(row.name);
-                  const labelId = `enhanced-table-checkbox-${index}`;
+    <>
+      <Backdrop
+        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={open}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
+      <Box sx={{ width: "100%" }}>
+        <Paper sx={{ width: "100%", mb: 2 }}>
+          <TableContainer>
+            <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
+              <SortingTableHead
+                order={order}
+                orderBy={orderBy}
+                onRequestSort={handleRequestSort}
+              />
+              <TableBody>
+                {stableSort(users, getComparator(order, orderBy))
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((row, index) => {
+                    const labelId = `sorting-table${index}`;
 
-                  return (
-                    <TableRow
-                      onClick={(event) => handleClick(event, row.name)}
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={row.name}
-                      classes={{ root: classes.tableRow }}
-                    >
-                      <TableCell
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                        align="center"
+                    return (
+                      <TableRow
+                        tabIndex={-1}
+                        key={row.name}
+                        className={classes.tableRow}
                       >
-                        {row.id}
-                      </TableCell>
-                      <TableCell align="center">
-                        {
-                          <Avatar
-                            alt={row.name}
-                            src={row.avatar}
-                            style={{ margin: "auto" }}
-                          />
-                        }
-                      </TableCell>
-                      <TableCell align="center">{row.name}</TableCell>
-                      <TableCell align="center">{row.email}</TableCell>
-                      <TableCell align="center">{row.contact}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              {emptyRows > 0 && (
-                <TableRow
-                  style={{
-                    height: 53 * emptyRows,
-                  }}
-                  classes={{ root: classes.tableRow }}
-                >
-                  <TableCell colSpan={6} />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={row.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
-    </Box>
+                        <TableCell
+                          id={labelId}
+                          scope="row"
+                          padding="none"
+                          align="center"
+                        >
+                          {
+                            <Avatar
+                              alt={row.name}
+                              src={row.avatar}
+                              style={{ margin: "auto" }}
+                            />
+                          }
+                        </TableCell>
+                        <TableCell align="center">{row.name}</TableCell>
+                        <TableCell align="center">{row.email}</TableCell>
+                        <TableCell align="center">{row.contact}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                {emptyRows > 0 && (
+                  <TableRow
+                    style={{
+                      height: 53 * emptyRows,
+                    }}
+                    className={classes.tableRow}
+                  >
+                    <TableCell colSpan={6} />
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={users.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+      </Box>
+    </>
   );
 }
+
+export default SortingTable;
