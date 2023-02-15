@@ -2,11 +2,13 @@ import React, { useEffect } from "react";
 import { useAuth0 } from "@auth0/auth0-react";
 import LoginButton from "./LoginButton";
 import LogoutButton from "./LogoutButton";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setLoginDetails } from "../redux/actions";
 import { makeStyles } from "@mui/styles";
 import SortingTable from "../commonControls/SortingTable";
 import "../App.css";
+import AppSearch from "../commonControls/AppSearch";
+import AppForm from "../commonControls/AppForm";
 
 const useStyles = makeStyles({
   alignUserDetails: {
@@ -42,6 +44,9 @@ const useStyles = makeStyles({
 const Home = () => {
   const classes = useStyles();
   const dispatch = useDispatch();
+  const { loading: loadingSelectedUser, user: selectedUser } = useSelector(
+    (state) => state.selectedUser
+  );
   const { getAccessTokenSilently, user, isAuthenticated, isLoading } =
     useAuth0();
 
@@ -88,7 +93,9 @@ const Home = () => {
       </div>
       <div className={classes.appTable}>
         <h2 className={classes.usersText}>Have a look at our Users</h2>
+        <AppSearch />
         <SortingTable />
+        {selectedUser.id && <AppForm />}
       </div>
     </>
   ) : (

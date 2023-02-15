@@ -1,20 +1,24 @@
 import React from "react";
 import PropTypes from "prop-types";
-import Box from "@mui/material/Box";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import TableSortLabel from "@mui/material/TableSortLabel";
-import Paper from "@mui/material/Paper";
+import {
+  Avatar,
+  Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TableSortLabel,
+} from "@mui/material";
+import Loader from "./Loader";
 import { visuallyHidden } from "@mui/utils";
 import { makeStyles } from "@mui/styles";
-import { Avatar, Backdrop, CircularProgress } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUsers } from "../redux/actions";
+import { setSelectedUser } from "../redux/userSelected/selectedUserActions";
 
 const useStyle = makeStyles({
   tableHead: {
@@ -166,7 +170,7 @@ function SortingTable() {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const classes = useStyle();
   const dispatch = useDispatch();
-  const { error, loading, users } = useSelector((state) => state.user);
+  const { loading: loadingUser, users } = useSelector((state) => state.user);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -179,8 +183,8 @@ function SortingTable() {
   }, []);
 
   React.useEffect(() => {
-    setOpen(loading);
-  }, [loading]);
+    setOpen(loadingUser);
+  }, [loadingUser]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -191,18 +195,17 @@ function SortingTable() {
     setPage(0);
   };
 
+  const rowSelected = (value) => {
+    dispatch(setSelectedUser(value));
+  };
+
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - users.length) : 0;
 
   return (
     <>
-      <Backdrop
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={open}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
+      <Loader open={open} />
       <Box sx={{ width: "100%" }}>
         <Paper sx={{ width: "100%", mb: 2 }}>
           <TableContainer>
@@ -223,6 +226,7 @@ function SortingTable() {
                         tabIndex={-1}
                         key={row.name}
                         className={classes.tableRow}
+                        onClick={(e) => rowSelected(row)}
                       >
                         <TableCell
                           id={labelId}

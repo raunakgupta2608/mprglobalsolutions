@@ -4,6 +4,7 @@ import {
   GET_USER_LOADING,
   GET_USER_SUCCESS,
   GET_USER_FAILURE,
+  FILTER_USERS,
 } from "./userActionTypes";
 
 const fetchUsersRequest = () => {
@@ -25,6 +26,13 @@ const fetchUsersFailure = (error) => {
   };
 };
 
+const fetchfilteredUsers = (key) => {
+  return {
+    type: FILTER_USERS,
+    payload: key,
+  };
+};
+
 export const fetchUsers = () => {
   return (dispatch) => {
     dispatch(fetchUsersRequest());
@@ -37,5 +45,12 @@ export const fetchUsers = () => {
         const errMsg = error.message;
         dispatch(fetchUsersFailure(errMsg));
       });
+  };
+};
+
+export const filterUsers = (key) => {
+  return (dispatch) => {
+    dispatch(fetchUsersRequest());
+    dispatch(fetchfilteredUsers(key));
   };
 };

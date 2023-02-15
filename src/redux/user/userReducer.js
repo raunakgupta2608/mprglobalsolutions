@@ -2,6 +2,7 @@ import {
   GET_USER_LOADING,
   GET_USER_SUCCESS,
   GET_USER_FAILURE,
+  FILTER_USERS,
 } from "./userActionTypes";
 
 const initialState = {
@@ -31,6 +32,21 @@ const userReducer = (state = initialState, action) => {
         loading: false,
         users: [],
         error: action.payload,
+      };
+
+    case FILTER_USERS:
+      return {
+        ...state,
+        loading: false,
+        users: (function () {
+          if (state.users.length > 0) {
+            const filteredUsers = state.users.filter((ele) => {
+              return ele.name.toLowerCase().includes(action.payload);
+            });
+            console.log("filteredUsers", filteredUsers);
+            return filteredUsers;
+          } else return state.users;
+        })(),
       };
 
     default:
